@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Auth.css";
 
+const rawBase = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const BASE = rawBase.endsWith("/api") ? rawBase : `${rawBase}/api`;
+
 function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -11,7 +14,6 @@ function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "student",
   });
 
   const [error, setError] = useState("");
@@ -25,41 +27,37 @@ function LoginPage() {
     });
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
 
-    const registeredUser = JSON.parse(
-      localStorage.getItem("user")
-    );
+    const { email, password } = formData;
 
-    if (!registeredUser) {
-      setError(
-        "No account found. Please register first."
-      );
-      return;
-    }
+    try {
+      const res = await fetch(`${BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (
-      registeredUser.email !== formData.email ||
-      registeredUser.password !== formData.password ||
-      registeredUser.role !== formData.role
-    ) {
-      setError(
-        "Invalid email, password or role."
-      );
-      return;
-    }
+      const data = await res.json();
 
-    login(registeredUser);
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Login failed");
+      }
 
-    if (registeredUser.role === "student") {
-      navigate("/student-dashboard");
-    } else if (
-      registeredUser.role === "instructor"
-    ) {
-      navigate("/instructor-dashboard");
-    } else {
-      navigate("/admin-dashboard");
+      login(data.token, data.user);
+
+      const role = data.user.role.toLowerCase();
+      if (role === "admin") {
+        navigate("/admin-dashboard");
+      } else if (role === "instructor") {
+        navigate("/instructor-dashboard");
+      } else {
+        navigate("/student-dashboard");
+      }
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -93,23 +91,6 @@ function LoginPage() {
             required
           />
 
-          <select
-            name="role"
-            onChange={handleChange}
-            value={formData.role}
-          >
-            <option value="student">
-              Student
-            </option>
-
-            <option value="instructor">
-              Instructor
-            </option>
-
-            <option value="admin">
-              Admin
-            </option>
-          </select>
 
           {error && (
             <p className="error-message">

@@ -10,18 +10,7 @@ function ForgotPasswordPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    const user = JSON.parse(
-      localStorage.getItem("user")
-    );
-
-    if (user && user.email === email) {
-      setMessage(
-        `Your password is: ${user.password}`
-      );
-    } else {
-      setMessage("No account found.");
-    }
+    setMessage("If this email is registered, check your inbox for password reset instructions.");
   };
 
   return (

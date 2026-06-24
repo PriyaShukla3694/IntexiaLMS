@@ -1,14 +1,92 @@
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 html,
 body,
-#root{
-  width:100%;
-  min-height:100vh;
-  background:#08090f;
-  overflow-x:hidden;
+#root {
+  width: 100%;
+  min-height: 100vh;
+  background: #08090f;
+  overflow-x: hidden;
+}
+
+/* ========================================== */
+/* 1. Global Typography Sizing Adjustments     */
+/* ========================================== */
+h1 {
+  font-size: 26px !important;
+}
+
+h2 {
+  font-size: 20px !important;
+}
+
+h3 {
+  font-size: 16px !important;
+}
+
+p, span, label, input, select, button, td, th {
+  font-size: 14px !important;
+}
+
+/* Sidebar header brand override to keep legible size */
+.sidebar-header h1 {
+  font-size: 24px !important;
+}
+
+/* ========================================== */
+/* 2. Collapsible Sidebar Layout Adjustments  */
+/* ========================================== */
+.sidebar {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Adjust main layout margins when collapsed */
+.main-content,
+.instructor-content,
+.admin-main,
+.admin-content,
+.settings-content,
+.manage-content,
+.students-content,
+.analytics-content,
+.course-details-content,
+.progress-content {
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body.sidebar-collapsed .main-content,
+body.sidebar-collapsed .instructor-content,
+body.sidebar-collapsed .admin-main,
+body.sidebar-collapsed .admin-content,
+body.sidebar-collapsed .settings-content,
+body.sidebar-collapsed .manage-content,
+body.sidebar-collapsed .students-content,
+body.sidebar-collapsed .analytics-content,
+body.sidebar-collapsed .course-details-content,
+body.sidebar-collapsed .progress-content {
+  margin-left: 80px !important;
+  width: calc(100% - 80px) !important;
+}
+
+body.sidebar-collapsed .sidebar {
+  width: 80px !important;
+}
+
+/* Hide text content, sub-titles and alerts when collapsed */
+body.sidebar-collapsed .sidebar .sidebar-header p,
+body.sidebar-collapsed .sidebar .nav-item span,
+body.sidebar-collapsed .sidebar .sidebar-alerts,
+body.sidebar-collapsed .sidebar .logout-btn span {
+  display: none !important;
+}
+
+/* Center elements within the collapsed container */
+body.sidebar-collapsed .sidebar .nav-item,
+body.sidebar-collapsed .sidebar .logout-btn {
+  justify-content: center !important;
+  padding: 16px 0 !important;
 }

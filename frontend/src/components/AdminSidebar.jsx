@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import "./Sidebar.css";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 import {
   FaHome,
@@ -8,14 +10,28 @@ import {
   FaChartBar,
   FaCog,
   FaSignOutAlt,
+  FaBars,
 } from "react-icons/fa";
 
 function AdminSidebar() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+  const [collapsed, setCollapsed] = useState(() => {
+    return localStorage.getItem("sidebar_collapsed") === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("sidebar_collapsed", collapsed);
+    if (collapsed) {
+      document.body.classList.add("sidebar-collapsed");
+    } else {
+      document.body.classList.remove("sidebar-collapsed");
+    }
+  }, [collapsed]);
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/");
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -23,9 +39,19 @@ function AdminSidebar() {
 
       <div>
 
-        <div className="sidebar-header">
-          <h1>INTEXIA</h1>
-          <p>Admin Panel</p>
+        <div className="sidebar-header" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+            {!collapsed && (
+              <div>
+                <h1 style={{ fontSize: "28px" }}>INTEXIA</h1>
+                <p style={{ fontSize: "12px", color: "#8b94a7" }}>Admin Panel</p>
+              </div>
+            )}
+            <FaBars
+              onClick={() => setCollapsed(!collapsed)}
+              style={{ cursor: "pointer", fontSize: "20px", color: "#C48A52", margin: collapsed ? "0 auto" : "0" }}
+            />
+          </div>
         </div>
 
         <nav className="sidebar-nav">

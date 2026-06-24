@@ -83,7 +83,7 @@ function App() {
         />
 
         <Route
-          path="/course-details"
+          path="/course/:id"
           element={
             <ProtectedRoute role="student">
               <CourseDetails />
@@ -92,7 +92,7 @@ function App() {
         />
 
         <Route
-          path="/video-learning"
+          path="/course/:id/learning"
           element={
             <ProtectedRoute role="student">
               <VideoLearning />

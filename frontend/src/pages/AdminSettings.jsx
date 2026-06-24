@@ -1,16 +1,29 @@
+import { useState, useEffect } from "react";
 import "../styles/AdminPages.css";
 import AdminSidebar from "../components/AdminSidebar";
 import Topbar from "../components/Topbar";
-import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 function AdminSettings() {
+  const { user, updateUser } = useAuth();
+  
   const [settings, setSettings] = useState({
-    adminName: "Admin",
-    email: "admin@lms.com",
+    adminName: "",
+    email: "",
     platformName: "Shourya LMS",
     supportEmail: "support@shouryalms.com",
     maxCourses: "50",
   });
+
+  useEffect(() => {
+    if (user) {
+      setSettings((prev) => ({
+        ...prev,
+        adminName: user.name || "Admin",
+        email: user.email || "admin@lms.com",
+      }));
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     setSettings({
@@ -20,11 +33,18 @@ function AdminSettings() {
   };
 
   const handleSave = () => {
-    localStorage.setItem(
-      "adminSettings",
-      JSON.stringify(settings)
-    );
+    if (!settings.adminName || !settings.email) {
+      alert("Admin Name and Email are required.");
+      return;
+    }
 
+    // Save Name and Email dynamically in context/localstorage
+    updateUser({
+      name: settings.adminName,
+      email: settings.email,
+    });
+
+    localStorage.setItem("adminSettings", JSON.stringify(settings));
     alert("Settings saved successfully!");
   };
 
@@ -35,12 +55,9 @@ function AdminSettings() {
       <div className="admin-main">
         <Topbar />
 
-        <h1 className="page-title">
-          Admin Settings
-        </h1>
+        <h1 className="page-title">Admin Settings</h1>
 
         <div className="settings-card">
-
           <div className="form-group">
             <label>Admin Name</label>
             <input
@@ -48,6 +65,7 @@ function AdminSettings() {
               name="adminName"
               value={settings.adminName}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -58,6 +76,7 @@ function AdminSettings() {
               name="email"
               value={settings.email}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -91,13 +110,9 @@ function AdminSettings() {
             />
           </div>
 
-          <button
-            className="save-btn"
-            onClick={handleSave}
-          >
+          <button className="save-btn" onClick={handleSave}>
             Save Changes
           </button>
-
         </div>
       </div>
     </div>

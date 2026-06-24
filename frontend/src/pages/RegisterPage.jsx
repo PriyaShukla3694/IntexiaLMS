@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Auth.css";
 
+const rawBase = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const BASE = rawBase.endsWith("/api") ? rawBase : `${rawBase}/api`;
+
 function RegisterPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -14,7 +17,6 @@ function RegisterPage() {
     mobile: "",
     password: "",
     confirmPassword: "",
-    role: "student",
   });
 
   const [error, setError] = useState("");
@@ -29,7 +31,7 @@ function RegisterPage() {
     }));
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     const {
@@ -38,7 +40,6 @@ function RegisterPage() {
       mobile,
       password,
       confirmPassword,
-      role,
     } = formData;
 
     if (name.trim().length < 3) {
@@ -63,29 +64,30 @@ function RegisterPage() {
 
     setLoading(true);
 
-    const userData = {
-      name: name.trim(),
-      email: email.trim(),
-      mobile,
-      password,
-      role,
-    };
+    try {
+      const res = await fetch(`${BASE}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          mobile: mobile.trim(),
+          password,
+        }),
+      });
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(userData)
-    );
+      const data = await res.json();
 
-    login(userData);
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Registration failed");
+      }
 
-    setLoading(false);
-
-    if (role === "student") {
+      login(data.token, data.user);
+      setLoading(false);
       navigate("/student-dashboard");
-    } else if (role === "instructor") {
-      navigate("/instructor-dashboard");
-    } else {
-      navigate("/admin-dashboard");
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
     }
   };
 
@@ -148,15 +150,6 @@ function RegisterPage() {
             required
           />
 
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-          >
-            <option value="student">Student</option>
-            <option value="instructor">Instructor</option>
-            <option value="admin">Admin</option>
-          </select>
 
           {error && (
             <p className="error-message">

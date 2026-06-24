@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                Int                @id @default(autoincrement())
+  name              String
+  email             String             @unique
+  passwordHash      String
+  mobile            String?
+  role              Role               @default(STUDENT)
+  createdAt         DateTime           @default(now())
+  enrollments       Enrollment[]
+  progress          Progress[]
+  certificates      Certificate[]
+  moduleCompletions ModuleCompletion[]
+}
+
+model Course {
+  id           Int          @id @default(autoincrement())
+  title        String
+  description  String
+  tag          String
+  difficulty   String
+  duration     String
+  totalLessons Int
+  instructor   String
+  instructorId Int?
+  approved     Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  modules      Module[]
+  enrollments  Enrollment[]
+  progress     Progress[]
+}
+
+model Module {
+  id          Int                @id @default(autoincrement())
+  title       String
+  duration    String
+  courseId    Int
+  course      Course             @relation(fields: [courseId], references: [id])
+  completions ModuleCompletion[]
+}
+
+model ModuleCompletion {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  moduleId  Int
+  completed Boolean  @default(true)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  module    Module   @relation(fields: [moduleId], references: [id])
+
+  @@unique([userId, moduleId])
+}
+
+model Enrollment {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  courseId   Int
+  enrolledAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  course     Course   @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+model Progress {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  courseId         Int
+  completedLessons Int      @default(0)
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id])
+  course           Course   @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+model Certificate {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  courseId Int
+  issuedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
