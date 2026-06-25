@@ -1,8 +1,27 @@
 import { Router } from "express";
+import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import auth from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+
 
 const router = Router();
+
+const courseSchema = z.object({
+  title: z.string().trim().min(1, "Course title is required."),
+  description: z.string().trim().optional(),
+  tag: z.string().trim().optional(),
+  difficulty: z.string().trim().optional(),
+  duration: z.string().trim().optional(),
+  totalLessons: z.number().int().optional(),
+  instructor: z.string().trim().optional()
+});
+
+const moduleSchema = z.object({
+  title: z.string().trim().min(1, "Module title is required."),
+  duration: z.string().trim().optional()
+});
+
 
 // Middleware to require INSTRUCTOR role
 function requireInstructor(req, res, next) {
@@ -47,13 +66,10 @@ router.get("/courses", auth, requireInstructor, async (req, res) => {
 });
 
 // CREATE COURSE
-router.post("/courses", auth, requireInstructor, async (req, res) => {
+router.post("/courses", auth, requireInstructor, validate(courseSchema), async (req, res) => {
   try {
     const { title, description, tag, difficulty, duration, totalLessons, instructor } = req.body;
-    
-    if (!title) {
-      return res.status(400).json({ error: "Course title is required." });
-    }
+
 
     const course = await prisma.course.create({
       data: {
@@ -76,14 +92,11 @@ router.post("/courses", auth, requireInstructor, async (req, res) => {
 });
 
 // EDIT COURSE
-router.put("/courses/:id", auth, requireInstructor, async (req, res) => {
+router.put("/courses/:id", auth, requireInstructor, validate(courseSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, tag, difficulty, duration, totalLessons, instructor } = req.body;
-    
-    if (!title) {
-      return res.status(400).json({ error: "Course title is required." });
-    }
+
 
     const existingCourse = await prisma.course.findUnique({
       where: { id: parseInt(id) }
@@ -165,15 +178,12 @@ router.delete("/courses/:id", auth, requireInstructor, async (req, res) => {
 });
 
 // ADD MODULE TO COURSE
-router.post("/courses/:id/modules", auth, requireInstructor, async (req, res) => {
+router.post("/courses/:id/modules", auth, requireInstructor, validate(moduleSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { title, duration } = req.body;
     const courseId = parseInt(id);
 
-    if (!title) {
-      return res.status(400).json({ error: "Module title is required." });
-    }
 
     const existingCourse = await prisma.course.findUnique({
       where: { id: courseId }

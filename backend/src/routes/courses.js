@@ -1,8 +1,17 @@
 import { Router } from "express";
+import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import auth from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+
 
 const router = Router();
+
+const progressSchema = z.object({
+  moduleId: z.number().int("moduleId must be an integer"),
+  completed: z.boolean()
+});
+
 
 // GET ALL COURSES
 router.get("/", async (req, res) => {
@@ -181,15 +190,12 @@ router.get("/:id/progress", auth, async (req, res) => {
 });
 
 // UPDATE COURSE PROGRESS
-router.post("/:id/progress", auth, async (req, res) => {
+router.post("/:id/progress", auth, validate(progressSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { moduleId, completed } = req.body;
     const courseId = parseInt(id);
 
-    if (moduleId === undefined || completed === undefined) {
-      return res.status(400).json({ error: "moduleId and completed are required." });
-    }
 
     // Verify enrollment
     const enrollment = await prisma.enrollment.findUnique({

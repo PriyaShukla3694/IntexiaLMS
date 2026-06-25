@@ -1,32 +1,31 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
+import validate from "../middleware/validate.js";
 
 const router = Router();
 
+const registerSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  email: z.string().trim().toLowerCase().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters long"),
+  mobile: z.string().trim().nullable().optional()
+});
+
+const loginSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Invalid email format"),
+  password: z.string().min(1, "Password is required")
+});
 
 // REGISTER
-router.post("/register", async (req, res) => {
+router.post("/register", validate(registerSchema), async (req, res) => {
   try {
     const { name, email, password, mobile } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: "Please provide name, email, and password." });
-    }
-
-    const normalizedEmail = email.toLowerCase().trim();
-
-    // Input Validation
-    if (password.length < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters long." });
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      return res.status(400).json({ error: "Invalid email format." });
-    }
-
     const existingUser = await prisma.user.findUnique({
-      where: { email: normalizedEmail }
+      where: { email }
     });
 
     if (existingUser) {
@@ -38,10 +37,10 @@ router.post("/register", async (req, res) => {
 
     const user = await prisma.user.create({
       data: {
-        name: name.trim(),
-        email: normalizedEmail,
+        name,
+        email,
         passwordHash,
-        mobile: mobile ? mobile.trim() : null,
+        mobile: mobile || null,
         role: "STUDENT"
       }
     });
@@ -69,23 +68,12 @@ router.post("/register", async (req, res) => {
 });
 
 // LOGIN
-router.post("/login", async (req, res) => {
+router.post("/login", validate(loginSchema), async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: "Please provide email and password." });
-    }
-
-    const normalizedEmail = email.toLowerCase().trim();
-
-    // Input Validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      return res.status(400).json({ error: "Invalid email format." });
-    }
-
     const user = await prisma.user.findUnique({
-      where: { email: normalizedEmail }
+      where: { email }
     });
 
     if (!user) {

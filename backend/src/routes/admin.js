@@ -1,8 +1,25 @@
 import { Router } from "express";
+import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import auth from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+
 
 const router = Router();
+
+const roleSchema = z.object({
+  role: z.enum(["STUDENT", "INSTRUCTOR", "ADMIN"], {
+    errorMap: () => ({ message: "Invalid role value. Must be STUDENT, INSTRUCTOR, or ADMIN." })
+  })
+});
+
+const approveSchema = z.object({
+  approved: z.boolean({
+    required_error: "approved status is required.",
+    invalid_type_error: "approved status must be a boolean."
+  })
+});
+
 
 // Middleware to require ADMIN role
 function requireAdmin(req, res, next) {
@@ -34,14 +51,11 @@ router.get("/users", auth, requireAdmin, async (req, res) => {
 });
 
 // UPDATE USER ROLE
-router.patch("/users/:id/role", auth, requireAdmin, async (req, res) => {
+router.patch("/users/:id/role", auth, requireAdmin, validate(roleSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body; // e.g. "STUDENT", "INSTRUCTOR", "ADMIN"
 
-    if (!["STUDENT", "INSTRUCTOR", "ADMIN"].includes(role)) {
-      return res.status(400).json({ error: "Invalid role value." });
-    }
 
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
@@ -102,10 +116,11 @@ router.get("/courses/pending", auth, requireAdmin, async (req, res) => {
 });
 
 // APPROVE/REJECT COURSE
-router.patch("/courses/:id/approve", auth, requireAdmin, async (req, res) => {
+router.patch("/courses/:id/approve", auth, requireAdmin, validate(approveSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { approved } = req.body; // boolean: true to approve, false to reject
+
 
     const course = await prisma.course.update({
       where: { id: parseInt(id) },

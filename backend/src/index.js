@@ -8,6 +8,8 @@ import courseRoutes from "./routes/courses.js";
 import instructorRoutes from "./routes/instructor.js";
 import adminRoutes from "./routes/admin.js";
 import errorHandler from "./middleware/errorHandler.js";
+import morgan from "morgan";
+
 
 
 dotenv.config();
@@ -17,6 +19,10 @@ const PORT = process.env.PORT || 5000;
 
 // Apply Helmet security headers
 app.use(helmet());
+
+// Log HTTP requests
+app.use(morgan("dev"));
+
 
 // Dynamic CORS configuration
 app.use(cors({
