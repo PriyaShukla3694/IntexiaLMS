@@ -5,6 +5,7 @@ import { prisma } from "../lib/prisma.js";
 
 const router = Router();
 
+
 // REGISTER
 router.post("/register", async (req, res) => {
   try {

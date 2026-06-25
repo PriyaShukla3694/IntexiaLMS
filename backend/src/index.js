@@ -7,6 +7,8 @@ import authRoutes from "./routes/auth.js";
 import courseRoutes from "./routes/courses.js";
 import instructorRoutes from "./routes/instructor.js";
 import adminRoutes from "./routes/admin.js";
+import errorHandler from "./middleware/errorHandler.js";
+
 
 dotenv.config();
 
@@ -39,9 +41,7 @@ app.use("/api/admin", adminRoutes);
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
 // Global error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Something went wrong" });
-});
+app.use(errorHandler);
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
