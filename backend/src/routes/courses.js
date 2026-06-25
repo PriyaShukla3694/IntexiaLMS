@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { z } from "zod";
+import PDFDocument from "pdfkit";
 import { prisma } from "../lib/prisma.js";
 import auth from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
+
 
 
 const router = Router();
@@ -303,4 +305,64 @@ router.post("/:id/progress", auth, validate(progressSchema), async (req, res) =>
   }
 });
 
+// GET /api/courses/certificates/:id/download
+router.get("/certificates/:id/download", auth, async (req, res) => {
+  try {
+    const certId = parseInt(req.params.id);
+    const cert = await prisma.certificate.findUnique({
+      where: { id: certId }
+    });
+
+    if (!cert) return res.status(404).json({ error: "Certificate not found." });
+
+    // Only the owner can download their cert
+    if (cert.userId !== req.user.id) {
+      return res.status(403).json({ error: "Forbidden." });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: cert.userId } });
+    const course = await prisma.course.findUnique({ where: { id: cert.courseId } });
+
+    const doc = new PDFDocument({ margin: 60 });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="certificate-${cert.id}.pdf"`
+    );
+
+    doc.pipe(res);
+
+    doc
+      .fontSize(28)
+      .text("Certificate of Completion", { align: "center" });
+
+    doc.moveDown();
+    doc.fontSize(16).text("This certifies that", { align: "center" });
+
+    doc.moveDown();
+    doc.fontSize(22).text(user.name, { align: "center" });
+
+    doc.moveDown();
+    doc.fontSize(16).text(`has successfully completed`, { align: "center" });
+
+    doc.moveDown();
+    doc.fontSize(20).text(course.title, { align: "center" });
+
+    doc.moveDown();
+    doc
+      .fontSize(12)
+      .text(
+        `Issued on ${new Date(cert.issuedAt).toLocaleDateString("en-IN")}`,
+        { align: "center" }
+      );
+
+    doc.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error generating certificate PDF." });
+  }
+});
+
 export default router;
+
